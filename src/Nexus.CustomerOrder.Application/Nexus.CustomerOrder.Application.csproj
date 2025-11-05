@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.CustomerOrder.Domain\Nexus.CustomerOrder.Domain.csproj" />
+    <ProjectReference Include="..\Nexus.Infrastructure.StorageAccount\Nexus.Infrastructure.StorageAccount.csproj" />
+  </ItemGroup>
+
+</Project>
