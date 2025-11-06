@@ -19,7 +19,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # 3️⃣ Install .NET Aspire workload
+      # 3️⃣ Install Aspire workload
       - name: Install .NET Aspire workload
         run: dotnet workload install aspire
 
@@ -31,7 +31,11 @@ jobs:
       - name: Build
         run: dotnet build ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release --no-restore
 
-      # # 6️⃣ Azure login using Service Principal
+      # 6️⃣ Publish AppHost
+      - name: Publish AppHost
+        run: dotnet publish ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release -o ./publish
+
+      # # 7️⃣ Azure login using service principal
       # - name: Azure Login
       #   uses: azure/login@v2
       #   with:
@@ -40,9 +44,9 @@ jobs:
       #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       #     client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      # 7️⃣ Deploy via .NET Aspire
-      - name: Deploy via .NET Aspire
-        run: dotnet aspire deploy ./src/Nexus.AppHost/Nexus.AppHost.csproj \
-              --resource-group rg-customerorder-prod \
-              --environment Production \
-              --location eastus
+      # 8️⃣ Deploy via Aspire by running the AppHost DLL
+      - name: Deploy via Aspire
+        run: dotnet ./publish/Nexus.AppHost.dll
+        env:
+          RESOURCE_GROUP: rg-customerorder-prod
+          LOCATION: eastus
