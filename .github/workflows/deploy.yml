@@ -1,48 +1,48 @@
-name: Deploy .NET Aspire App to Azure
+name: Build and Deploy .NET Aspire App
 
 on:
   push:
     branches: [ master ]
-
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      # 1️⃣ Checkout source code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup .NET 8
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore
-        run: dotnet restore
+      # 3️⃣ Install .NET Aspire workload
+      - name: Install .NET Aspire workload
+        run: dotnet workload install aspire
 
+      # 4️⃣ Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore ./src/Nexus.AppHost/Nexus.AppHost.csproj
+
+      # 5️⃣ Build project
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release --no-restore
 
-      - name: Install .NET Aspire
-        run: dotnet tool install -g Microsoft.DotNet.Aspire
-
-      - name: Add dotnet tools to PATH
-        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
-
-      # - name: Azure Login (OIDC)
+      # # 6️⃣ Azure login using Service Principal
+      # - name: Azure Login
       #   uses: azure/login@v2
       #   with:
       #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
       #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
       #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      #     enable-oidc: true
+      #     client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
+      # 7️⃣ Deploy via .NET Aspire
       - name: Deploy via .NET Aspire
         run: dotnet aspire deploy ./src/Nexus.AppHost/Nexus.AppHost.csproj \
-                --resource-group rg-customerorder-prod \
-                --environment Production \
-                --location eastus
+              --resource-group rg-customerorder-prod \
+              --environment Production \
+              --location eastus
