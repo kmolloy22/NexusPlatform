@@ -27,6 +27,12 @@ jobs:
       - name: Build
         run: dotnet build --no-restore -c Release
 
+      - name: Install .NET Aspire
+        run: dotnet tool install -g Microsoft.DotNet.Aspire
+
+      - name: Add dotnet tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
       # - name: Azure Login (OIDC)
       #   uses: azure/login@v2
       #   with:
