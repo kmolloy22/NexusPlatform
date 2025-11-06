@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout source code
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -35,6 +35,10 @@ jobs:
       - name: Publish AppHost
         run: dotnet publish ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release -o ./publish
 
+      # 6a️⃣ Debug: list files in publish folder
+      - name: List publish folder
+        run: ls -R ./publish
+
       # # 7️⃣ Azure login using service principal
       # - name: Azure Login
       #   uses: azure/login@v2
@@ -44,9 +48,12 @@ jobs:
       #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       #     client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      # 8️⃣ Deploy via Aspire by running the AppHost DLL
+      # 8️⃣ Deploy via Aspire (run the AppHost DLL)
       - name: Deploy via Aspire
-        run: dotnet ./publish/Nexus.AppHost.dll
+        run: |
+          DLL_NAME=$(ls ./publish | grep .dll)
+          echo "Running DLL: $DLL_NAME"
+          dotnet ./publish/$DLL_NAME
         env:
           RESOURCE_GROUP: rg-customerorder-prod
           LOCATION: eastus
