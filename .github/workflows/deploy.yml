@@ -13,33 +13,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup .NET 8
+      # 2️⃣ Check working directory
+      - name: Check directory structure
+        run: |
+          pwd
+          ls -R
+
+      # 3️⃣ Setup .NET 8
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      # 3️⃣ Install Aspire workload
+      # 4️⃣ Install Aspire workload
       - name: Install .NET Aspire workload
         run: dotnet workload install aspire
 
-      # 4️⃣ Restore dependencies
+      # 5️⃣ Restore dependencies
       - name: Restore dependencies
         run: dotnet restore ./src/Nexus.AppHost/Nexus.AppHost.csproj
 
-      # 5️⃣ Build project
+      # 6️⃣ Build project
       - name: Build
         run: dotnet build ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release --no-restore
 
-      # 6️⃣ Publish AppHost
+      # 7️⃣ Publish AppHost
       - name: Publish AppHost
         run: dotnet publish ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release -o ./publish
 
-      # 6a️⃣ Debug: list files in publish folder
+      # 7a️⃣ Debug: list files in publish folder
       - name: List publish folder
         run: ls -R ./publish
 
-      # # 7️⃣ Azure login using service principal
+      # # 8️⃣ Azure login using service principal
       # - name: Azure Login
       #   uses: azure/login@v2
       #   with:
@@ -48,7 +54,7 @@ jobs:
       #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       #     client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      # 8️⃣ Deploy via Aspire (run the AppHost DLL)
+      # 9️⃣ Deploy via Aspire
       - name: Deploy via Aspire
         run: |
           DLL_NAME=$(ls ./publish | grep .dll)
