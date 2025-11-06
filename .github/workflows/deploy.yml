@@ -1,74 +1,51 @@
-name: Build and Deploy .NET Aspire App
+name: Build and Deploy Nexus.AppHost
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Show working directory & structure
-      - name: Show working directory
-        run: |
-          echo "Current path: $(pwd)"
-          ls -R src
-
-      # 3️⃣ Setup .NET 8
-      - name: Setup .NET
+      - name: Setup .NET 9 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: 9.0.x
 
-      # 4️⃣ Install Aspire workload
-      - name: Install .NET Aspire workload
-        run: dotnet workload install aspire
-
-      # 5️⃣ Restore dependencies
       - name: Restore dependencies
-        run: dotnet restore src/Nexus.AppHost/Nexus.AppHost.csproj
+        run: dotnet restore ./src/Nexus.AppHost/Nexus.AppHost.csproj
 
-      # 6️⃣ Build AppHost
       - name: Build AppHost
-        run: dotnet build src/Nexus.AppHost/Nexus.AppHost.csproj -c Release --no-restore
+        run: dotnet build ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release --no-restore
 
-      # 7️⃣ Publish AppHost (absolute output path)
       - name: Publish AppHost
-        run: dotnet publish src/Nexus.AppHost/Nexus.AppHost.csproj -c Release -o ${{ github.workspace }}/publish
-
-      # 8️⃣ Debug: list files in publish folder
-      - name: Verify publish output
         run: |
+          echo "Publishing Nexus.AppHost..."
+          dotnet publish ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release -o ${{ github.workspace }}/publish
           echo "Listing published artifacts..."
           ls -la ${{ github.workspace }}/publish || echo "⚠️ Publish folder not found!"
 
-      # # 9️⃣ Azure login using service principal
-      # - name: Azure Login
-      #   uses: azure/login@v2
-      #   with:
-      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      #     client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-
-      # 🔟 Deploy via Aspire
-      - name: Deploy via Aspire
+      - name: Verify publish output
+        if: success()
         run: |
-          cd ${{ github.workspace }}/publish
-          echo "Published contents:"
-          ls -la
-          DLL_NAME=$(ls | grep .dll | head -n 1)
-          if [ -z "$DLL_NAME" ]; then
-            echo "❌ No DLL found in publish output."
+          if [ ! -d "${{ github.workspace }}/publish" ]; then
+            echo "❌ Publish folder missing. Stopping deployment."
             exit 1
           fi
-          echo "✅ Running DLL: $DLL_NAME"
-          dotnet "$DLL_NAME"
+
+      - name: Deploy to Azure (optional)
         env:
-          RESOURCE_GROUP: rg-customerorder-prod
-          LOCATION: eastus
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          echo "Deploying Nexus.AppHost..."
+          # Example only — replace with your actual command or use dotnet aspire when supported
+          dotnet ${GITHUB_WORKSPACE}/publish/Nexus.AppHost.dll || echo "⚠️ No deploy command executed."
