@@ -25,12 +25,17 @@ jobs:
       - name: Build AppHost
         run: dotnet build ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release --no-restore
 
-      - name: Publish AppHost
+      - name: Publish AppHost (diagnostic)
         run: |
-          echo "Publishing Nexus.AppHost..."
-          dotnet publish ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release -o ${{ github.workspace }}/publish
-          echo "Listing published artifacts..."
-          ls -la ${{ github.workspace }}/publish || echo "⚠️ Publish folder not found!"
+          echo "📂 Current working directory:"
+          pwd
+          echo "📁 Listing ./src/Nexus.AppHost:"
+          ls -la ./src/Nexus.AppHost || echo "⚠️ Folder not found!"
+          echo "🚀 Attempting publish..."
+          dotnet publish ./src/Nexus.AppHost/Nexus.AppHost.csproj -c Release -v diag -o ${{ github.workspace }}/publish
+          echo "✅ Publish complete, listing output:"
+          ls -R ${{ github.workspace }}/publish || echo "⚠️ Publish folder not found!"
+
 
       - name: Verify publish output
         if: success()
