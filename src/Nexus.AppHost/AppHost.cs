@@ -4,9 +4,9 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var entraValidAudience = builder.AddParameter("EntraValidAudience");
-var entraAuthority = builder.AddParameter("EntraAuthority");
-var apiAccessScope = builder.AddParameter("ApiAccessScope");
+// var entraValidAudience = builder.AddParameter("EntraValidAudience");
+// var entraAuthority = builder.AddParameter("EntraAuthority");
+// var apiAccessScope = builder.AddParameter("ApiAccessScope");
 
 //var database = builder.AddAzurePostgresFlexibleServer("postgres")
 //                    .RunAsContainer(postgres =>
@@ -52,15 +52,15 @@ var api = builder.AddProject<Nexus_CustomerOrder_Api>("nexus-customer-order-api"
                 .WithReference(tables)
                 .WaitFor(blobs)
                 .WaitFor(tables)
-                .WithEnvironment(
-                    "Authentication__Schemes__Entra__ValidAudience",
-                    entraValidAudience)
-                .WithEnvironment(
-                    "Authentication__Schemes__Entra__Authority",
-                    entraAuthority)
-                .WithEnvironment(
-                    "ApiAccessScope",
-                    apiAccessScope)
+                // .WithEnvironment(
+                //     "Authentication__Schemes__Entra__ValidAudience",
+                //     entraValidAudience)
+                // .WithEnvironment(
+                //     "Authentication__Schemes__Entra__Authority",
+                //     entraAuthority)
+                // .WithEnvironment(
+                //     "ApiAccessScope",
+                //     apiAccessScope)
                 .WithExternalHttpEndpoints()
                 .PublishAsAzureContainerApp((infra, containerApp) =>
                 {
