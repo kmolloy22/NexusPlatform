@@ -291,3 +291,4 @@ __pycache__/
 /src/API.Monitor.Website.Blazor/appsettings_prod.json
 
 src/API.Monitor.Website.Blazor/appsettings_prod.json
+.azure
