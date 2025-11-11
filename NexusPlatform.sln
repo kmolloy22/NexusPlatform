@@ -28,9 +28,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosting", "Hosting", "{1386
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Infrastructure.StorageAccount.Tests.Units", "tests\Nexus.Infrastructure.StorageAccount.Tests.Units\Nexus.Infrastructure.StorageAccount.Tests.Units.csproj", "{9F5BBF9C-FD63-40F4-BAE3-89BE8C3DE1B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Core", "src\Nexus.Core\Nexus.Core.csproj", "{A541CF4A-F495-405B-A63B-E7FBB8AB3F54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Shared.Core", "src\Nexus.Shared.Core\Nexus.Shared.Core.csproj", "{A541CF4A-F495-405B-A63B-E7FBB8AB3F54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Core.Tests", "src\Nexus.Core.Tests\Nexus.Core.Tests.csproj", "{01942510-F087-4640-B904-34DD32DCF340}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Shared.Core.Tests", "src\Nexus.Shared.Core.Tests\Nexus.Shared.Core.Tests.csproj", "{01942510-F087-4640-B904-34DD32DCF340}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.CustomerOrder.Application", "src\Nexus.CustomerOrder.Application\Nexus.CustomerOrder.Application.csproj", "{2FB28AD4-636A-4C25-BDFE-56CE833E12E8}"
 EndProject
@@ -40,6 +40,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{10CF
 	ProjectSection(SolutionItems) = preProject
 		.github\copilot-instructions.md = .github\copilot-instructions.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Shared.Kernel", "src\Nexus.Shared.Kernel\Nexus.Shared.Kernel.csproj", "{A51C6965-ED41-4728-A600-D08B5A0DE503}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +85,10 @@ Global
 		{F423D604-CF14-4832-B33C-C1D457AF8710}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F423D604-CF14-4832-B33C-C1D457AF8710}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F423D604-CF14-4832-B33C-C1D457AF8710}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A51C6965-ED41-4728-A600-D08B5A0DE503}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A51C6965-ED41-4728-A600-D08B5A0DE503}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A51C6965-ED41-4728-A600-D08B5A0DE503}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A51C6965-ED41-4728-A600-D08B5A0DE503}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -99,6 +105,7 @@ Global
 		{01942510-F087-4640-B904-34DD32DCF340} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{2FB28AD4-636A-4C25-BDFE-56CE833E12E8} = {A8A47DC1-D12B-40F3-A8C7-79D325359CAE}
 		{F423D604-CF14-4832-B33C-C1D457AF8710} = {A8A47DC1-D12B-40F3-A8C7-79D325359CAE}
+		{A51C6965-ED41-4728-A600-D08B5A0DE503} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BE39723A-5E17-4772-B802-8B2ED3E8E024}

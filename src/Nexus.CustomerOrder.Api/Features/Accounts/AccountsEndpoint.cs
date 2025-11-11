@@ -1,5 +1,8 @@
 ﻿using Nexus.CustomerOrder.Api.Features.Accounts.AccountCreate;
 using Nexus.CustomerOrder.Api.Features.Accounts.AccountsGet;
+using Nexus.CustomerOrder.Api.Features.Accounts.AccountGet;
+using Nexus.CustomerOrder.Api.Features.Accounts.AccountUpdate;
+using Nexus.CustomerOrder.Api.Features.Accounts.AccountDelete;
 
 namespace Nexus.CustomerOrder.Api.Features.Accounts;
 
@@ -10,9 +13,9 @@ public static class AccountsEndpoint
         var group = app.MapGroup("/api/accounts").WithTags("Accounts");
 
         group.MapCreateAccountEndpoint();
-        //group.MapGetAccountEndpoint();
-        //group.MapUpdateAccountEndpoint();
+        group.MapGetAccountEndpoint();
+        group.MapUpdateAccountEndpoint();
         group.MapGetAccountsEndpoint();
-        //group.MapDeleteAccountEndpoint();
+        group.MapDeleteAccountEndpoint();
     }
 }

@@ -22,7 +22,7 @@ internal class GetAccountsHandler : IRequestHandler<GetAccountsCommand, PagedRes
             e.FirstName,
             e.LastName,
             e.Email,
-            e.PhoneNumber,
+            e.PhoneNumber ?? string.Empty,
             new AddressDto(
                 e.Address_Street1,
                 e.Address_Street2,

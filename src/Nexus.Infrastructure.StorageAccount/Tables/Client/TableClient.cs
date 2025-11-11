@@ -1,7 +1,7 @@
 ﻿using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
-using Nexus.Core;
+using Nexus.Shared.Core;
 using System.Linq.Expressions;
 
 namespace Nexus.Infrastructure.StorageAccount.Tables.Client;
@@ -11,7 +11,7 @@ public interface ITableClient<TTableStorageConfiguration, TTableEntity>
         where TTableEntity : ITableEntity
 {
     AsyncPageable<TTableEntity> QueryAsync(Expression<Func<TTableEntity, bool>> filter, int? pageSize = null, IEnumerable<string> select = null);
-    
+
     Task<Maybe<TTableEntity>> GetByIdAsync(string partitionKey, string rowKey);
 
     Task<Response> AddAsync(TTableEntity entity);
@@ -99,8 +99,8 @@ public class TableClient<TTableStorageConfiguration, TTableEntity> : ITableClien
     public Task<Response> DeleteAsync(TTableEntity entity)
     {
         var table = GetTableClient();
-
-        return table.DeleteEntityAsync(entity);
+        var etag = entity.ETag.Equals(default(ETag)) ? ETag.All : entity.ETag;
+        return table.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, etag);
     }
 
     public async Task<bool> ExistsAsync(string partitionKey, string rowKey)

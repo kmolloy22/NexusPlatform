@@ -1,4 +1,6 @@
-﻿namespace Nexus.CustomerOrder.Domain.Features.Accounts;
+﻿using Nexus.Shared.Kernel.Extensions;
+
+namespace Nexus.CustomerOrder.Domain.Features.Accounts;
 
 public sealed class Account
 {
@@ -11,14 +13,14 @@ public sealed class Account
 
     public Account(Guid id, string firstName, string lastName, string? email, string? phone, Address address)
     {
-        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+        if (firstName.IsMissing() || lastName.IsMissing())
             throw new ArgumentException("FirstName and LastName are required");
 
         Id = id;
         FirstName = firstName.Trim();
         LastName = lastName.Trim();
-        Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
-        Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
+        Email = email.IsMissing() ? null : email.Trim();
+        Phone = phone.IsMissing() ? null : phone.Trim();
         Address = address ?? throw new ArgumentNullException(nameof(address));
     }
 }

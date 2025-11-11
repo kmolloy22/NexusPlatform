@@ -1,25 +1,22 @@
-﻿//using Nexus.CustomerOrder.Api.Features.Accounts.Infrastructure.StorageAccounts;
-//using Nexus.Infrastructure.StorageAccount.Tables.Client;
+﻿using MediatR;
+using Nexus.CustomerOrder.Application.Features.Accounts;
 
-//namespace Nexus.CustomerOrder.Api.Features.Accounts.AccountDelete;
+namespace Nexus.CustomerOrder.Api.Features.Accounts.AccountDelete;
 
-//public static class AccountDeleteEndpoint
-//{
-//    public static void MapDeleteAccountEndpoint(this IEndpointRouteBuilder app)
-//    {
-//        app.MapDelete("/{id}", async (
-//            string id,
-//            ITableClient<AccountsTableStorageConfiguration, AccountTableEntity> tableClient) =>
-//        {
-//            var maybe = await tableClient.GetByIdAsync(AccountTableEntity.DefaultPartitionKey, id);
-//            if (!maybe.HasValue)
-//                return Results.NotFound();
-
-//            await tableClient.DeleteAsync(maybe.Value);
-//            return Results.NoContent();
-//        })
-//        .WithName("DeleteAccount")
-//        .WithSummary("Deletes an account.")
-//        .WithDescription("Deletes the specified account if it exists.");
-//    }
-//}
+public static class AccountDeleteEndpoint
+{
+    public static void MapDeleteAccountEndpoint(this IEndpointRouteBuilder app)
+    {
+        app.MapDelete("/{id}", async (
+            string id,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var deleted = await mediator.Send(new DeleteAccountCommand(id), ct);
+            return deleted ? Results.NoContent() : Results.NotFound();
+        })
+        .WithName("DeleteAccount")
+        .WithSummary("Deletes an account.")
+        .WithDescription("Deletes the specified account if it exists.");
+    }
+}

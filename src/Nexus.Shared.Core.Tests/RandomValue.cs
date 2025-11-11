@@ -1,4 +1,4 @@
-﻿namespace Nexus.Core.Tests;
+﻿namespace Nexus.Shared.Core.Tests;
 
 public class RandomValue
 {

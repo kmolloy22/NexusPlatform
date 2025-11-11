@@ -6,8 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Nexus.Shared.Kernel\Nexus.Shared.Kernel.csproj" />
-  </ItemGroup>
-
 </Project>

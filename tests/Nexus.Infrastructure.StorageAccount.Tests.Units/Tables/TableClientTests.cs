@@ -1,8 +1,8 @@
 ﻿using FluentAssertions;
 using FluentAssertions.Equivalency;
 using Microsoft.Extensions.DependencyInjection;
-using Nexus.Core.Tests;
 using Nexus.Infrastructure.StorageAccount.Tables.Client;
+using Nexus.Shared.Core.Tests;
 
 namespace Nexus.Infrastructure.StorageAccount.Tests.Units.Tables;
 

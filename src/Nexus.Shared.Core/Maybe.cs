@@ -1,4 +1,4 @@
-﻿namespace Nexus.Core;
+﻿namespace Nexus.Shared.Core;
 
 /// Used to encapsulate the possibility of a null-reference and communicate intent
 /// </summary>
