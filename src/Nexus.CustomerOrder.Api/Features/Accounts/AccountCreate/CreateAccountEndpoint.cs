@@ -26,7 +26,8 @@ public static class CreateAccountEndpoint
 
             var id = await mediator.Send(command);
 
-            return Results.Created($"/accounts/{id}", new { id });
+            var idN = id.ToString("N");
+            return Results.Created($"/api/accounts/{idN}", new { id = idN });
         })
         .WithName("CreateAccount")
         .WithSummary("Creates a new account");

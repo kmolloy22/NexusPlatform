@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Register TableServiceClient for the ping endpoint (optional utility)
 //builder.Services.AddSingleton(new TableServiceClient(tablesCs));
 
-// Register MediatR — scan Application assembly for handlers
+// Register MediatR ï¿½ scan Application assembly for handlers
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(CreateAccountHandler).Assembly));
 
@@ -26,3 +26,5 @@ var app = builder.Build();
 app.MapAccounts();
 
 app.Run();
+
+public partial class Program { }

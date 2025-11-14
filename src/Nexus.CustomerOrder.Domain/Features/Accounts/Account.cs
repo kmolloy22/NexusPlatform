@@ -2,7 +2,7 @@
 
 namespace Nexus.CustomerOrder.Domain.Features.Accounts;
 
-public sealed class Account
+public class Account
 {
     public Guid Id { get; }
     public string FirstName { get; }
