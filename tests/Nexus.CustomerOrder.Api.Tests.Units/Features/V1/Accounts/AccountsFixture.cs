@@ -16,4 +16,7 @@ public class AccountsFixture : CustomerOrderFixture
     }
 
     public static string GetUrl(string id) => $"/api/accounts/{id}";
+    public static string CreateUrl() => "/api/accounts/";
+    public static string GetAccountsUrl(string? queryString = null) => 
+        string.IsNullOrEmpty(queryString) ? "/api/accounts/" : $"/api/accounts/{queryString}";
 }

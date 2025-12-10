@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Nexus.CustomerOrder.Application.Features.Accounts.Models;
 using Nexus.CustomerOrder.Application.Features.Accounts.Ports;
+using Nexus.Shared.Kernel.Extensions;
 
 namespace Nexus.CustomerOrder.Application.Features.Accounts;
 
@@ -10,6 +11,9 @@ internal class GetAccountHandler(IAccountRepository repository) : IRequestHandle
 {
 	public async Task<GetAccountDto?> Handle(GetAccountCommand cmd, CancellationToken cancellationToken)
 	{
+        if (cmd.AccountId.IsMissing())
+            throw new ArgumentNullException("Account id cannot be empty.", nameof(cmd.AccountId));
+
 		var entity = await repository.GetByIdAsync(cmd.AccountId, cancellationToken);
 		if (entity is null)
 			return null;

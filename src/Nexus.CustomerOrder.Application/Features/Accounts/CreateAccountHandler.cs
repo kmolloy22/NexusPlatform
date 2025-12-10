@@ -10,12 +10,16 @@ public record CreateAccountCommand(
     string? Email,
     string? Phone,
     Address Address
-) : IRequest<Guid>;
+) : IRequest<CreateAccountResult>;
 
-public class CreateAccountHandler(IAccountRepository repository) : IRequestHandler<CreateAccountCommand, Guid>
+public sealed record CreateAccountResult(Guid Id, DateTimeOffset CreatedAt);
+
+public class CreateAccountHandler(IAccountRepository repository) : IRequestHandler<CreateAccountCommand, CreateAccountResult>
 {
-    public async Task<Guid> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
+    public async Task<CreateAccountResult> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
     {
+        var createdAt = DateTimeOffset.UtcNow;
+        
         var account = new Account(
             Guid.NewGuid(),
             request.FirstName,
@@ -26,6 +30,6 @@ public class CreateAccountHandler(IAccountRepository repository) : IRequestHandl
 
         await repository.AddAsync(account, cancellationToken);
 
-        return account.Id;
+        return new CreateAccountResult(account.Id, createdAt);
     }
 }

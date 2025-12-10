@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Nexus.CustomerOrder.Api.Infrastructure.Validation;
 using Nexus.CustomerOrder.Application.Features.Accounts;
 using Nexus.CustomerOrder.Application.Features.Accounts.Models;
 using Nexus.CustomerOrder.Domain.Features.Accounts;
@@ -22,14 +23,33 @@ public static class CreateAccountEndpoint
                 dto.Address.PostalCode,
                 dto.Address.Country);
 
-            var command = new CreateAccountCommand(dto.FirstName, dto.LastName, dto.Email, dto.Phone, address);
+            var command = new CreateAccountCommand(
+                dto.FirstName,
+                dto.LastName,
+                dto.Email,
+                dto.Phone,
+                address);
 
-            var id = await mediator.Send(command);
+            var result = await mediator.Send(command);
 
-            var idN = id.ToString("N");
-            return Results.Created($"/api/accounts/{idN}", new { id = idN });
+            var idN = result.Id.ToString("N");
+            var location = $"/api/accounts/{idN}";
+
+            var response = new CreateAccountResponseDto(
+                Id: idN,
+                Location: location,
+                CreatedAt: result.CreatedAt
+            );
+
+            return Results.Created(location, response);
         })
+        .AddEndpointFilter<ValidationFilter<CreateAccountDto>>()
         .WithName("CreateAccount")
-        .WithSummary("Creates a new account");
+        .WithSummary("Creates a new account")
+        .WithDescription("Creates a new customer account with the provided details and returns the account identifier")
+        .Produces<CreateAccountResponseDto>(StatusCodes.Status201Created)
+        .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status500InternalServerError)
+        .WithOpenApi();
     }
 }

@@ -21,7 +21,7 @@ public class SmokeTests : IClassFixture<ApiFactory>
         var create = new CreateAccountDto(
             "Ada",
             "Lovelace",
-            "555-0001",
+            "+15550001",  // Fixed: Use international format
             "ada@example.test",
             new AddressDto("1 Main", null, "London", null, "EC1A1", "UK"));
 
@@ -45,7 +45,7 @@ public class SmokeTests : IClassFixture<ApiFactory>
     {
         // create
         var create = new CreateAccountDto(
-            "Grace", "Hopper", "555-0002", "grace@example.test",
+            "Grace", "Hopper", "+15550002", "grace@example.test",  // Fixed: Use international format
             new AddressDto("2 Fleet", null, "London", null, "EC2A2", "UK"));
         var created = await _client.PostAsJsonAsync("/api/accounts", create);
         var id = created.Headers.Location!.ToString().Split('/').Last();

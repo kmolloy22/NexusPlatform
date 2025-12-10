@@ -1,20 +1,23 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
-    <PackageReference Include="MediatR" Version="12.5.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Nexus.CustomerOrder.Domain\Nexus.CustomerOrder.Domain.csproj" />
-    <ProjectReference Include="..\Nexus.Infrastructure.StorageAccount\Nexus.Infrastructure.StorageAccount.csproj" />
-    <ProjectReference Include="..\Nexus.Shared.Kernel\Nexus.Shared.Kernel.csproj" />
-  </ItemGroup>
-
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Azure.Data.Tables"
+                          Version="12.11.0" />
+        <PackageReference Include="FluentValidation"
+                          Version="11.8.1" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions"
+                          Version="11.8.1" />
+        <PackageReference Include="MediatR"
+                          Version="12.5.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Nexus.CustomerOrder.Domain\Nexus.CustomerOrder.Domain.csproj" />
+        <ProjectReference Include="..\Nexus.Infrastructure.StorageAccount\Nexus.Infrastructure.StorageAccount.csproj" />
+        <ProjectReference Include="..\Nexus.Shared.Kernel\Nexus.Shared.Kernel.csproj" />
+    </ItemGroup>
 </Project>

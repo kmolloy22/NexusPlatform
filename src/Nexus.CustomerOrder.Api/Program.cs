@@ -1,6 +1,8 @@
+using FluentValidation;
 using Nexus.CustomerOrder.Api.Features.Accounts;
 using Nexus.CustomerOrder.Application.Features.Accounts;
 using Nexus.CustomerOrder.Application.Features.Accounts.Extensions;
+using Nexus.CustomerOrder.Application.Features.Accounts.Validation;
 
 // Access configuration via builder.Configuration instead of sp.Configuration
 var builder = WebApplication.CreateBuilder(args);
@@ -21,10 +23,14 @@ builder.Services.AddMediatR(cfg =>
 // Register the Create Account feature (adds ITableClient<AccountsTableStorageConfiguration, AccountTableEntity>)
 builder.Services.AddAccountsInfrastructure();
 
+// FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<CreateAccountDtoValidator>();
+
 var app = builder.Build();
 
 app.MapAccounts();
 
 app.Run();
 
-public partial class Program { }
+public partial class Program
+{ }

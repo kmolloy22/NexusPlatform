@@ -12,9 +12,15 @@ public static class GetAccountEndpoint
             IMediator mediator,
             CancellationToken ct) =>
         {
-            // Optionally validate GUID format; if not a GUID we still attempt fetch (storage key is string)
-            var dto = await mediator.Send(new GetAccountCommand(id), ct);
-            return dto is null ? Results.NotFound() : Results.Ok(dto);
+            try
+            {
+                var dto = await mediator.Send(new GetAccountCommand(id), ct);
+                return dto is null ? Results.NotFound() : Results.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
         })
         .WithName("GetAccount")
         .WithSummary("Gets an account by id.")
