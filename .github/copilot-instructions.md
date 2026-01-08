@@ -1,154 +1,213 @@
-# GitHub Copilot Instructions for Nexus Platform
+---
+description: 'Nexus Platform development guidelines for .NET 9 microservices'
+applyTo: '**/*.cs, **/*.csproj'
+---
 
-## Project Overview
-Nexus Platform is a .NET 9 microservices application using Clean Architecture, deployed on Azure Container Apps with Azure Table Storage.
+# Nexus Platform Development Guidelines
 
-## Architecture Patterns
-- **Clean Architecture**: Domain → Application → Infrastructure → API layers
-- **CQRS**: Commands and Queries with MediatR handlers
-- **Repository Pattern**: Generic `ITableClient<TConfig, TEntity>` for Azure Table Storage
-- **Feature Organization**: Group related functionality together
+## Project Context
+.NET 9 microservices using Clean Architecture, CQRS with MediatR, Azure Table Storage, deployed on Azure Container Apps.
 
-## Code Generation Guidelines
+## Core Technology Standards
 
-### Naming Conventions
-- Namespace pattern: `Nexus.{ServiceName}.{Layer}`
-- Commands: `{Action}{Entity}Command` (e.g., `CreateAccountCommand`)
-- Queries: `{Action}{Entity}Query` (e.g., `GetAccountsQuery`)
-- Handlers: `{Action}{Entity}Handler` (e.g., `CreateAccountHandler`)
-- Endpoints: `{Action}{Entity}Endpoint` (e.g., `CreateAccountEndpoint`)
+- Target Framework: net9.0 with nullable reference types enabled
+- Use C# 12 features: primary constructors, collection expressions
+- Azure.Data.Tables for all storage operations
+- MediatR for CQRS pattern
+- xUnit + FluentAssertions + NSubstitute for testing
+- OpenTelemetry for observability
 
-### MediatR Handlers
+## Architecture Rules (Always Enforce)
+
+### Layer Dependencies
+- ✅ API → Application → Domain (one-way flow)
+- ✅ Infrastructure implements interfaces from Application/Domain
+- ❌ Never reference Infrastructure from Domain
+- ❌ Never put business logic in API layer
+- ❌ No circular dependencies between projects
+
+### CQRS Pattern
+- ✅ Use MediatR for all business operations
+- ✅ Commands for state changes, Queries for data retrieval
+- ✅ Handlers contain business logic, not endpoints
+- ✅ One handler per command/query
+
+### Repository Pattern
+- ✅ Use `ITableClient<TConfig, TEntity>` for Azure Table Storage
+- ✅ Define repository interfaces in Application layer
+- ✅ Implement repositories in Infrastructure layer
+- ✅ Inject repositories into handlers via constructor
+
+## Async & Cancellation (Critical)
+
+- All I/O operations must be async
+- Every async method signature: `async Task<T> MethodAsync(..., CancellationToken cancellationToken = default)`
+- Always propagate CancellationToken through the call chain
+- Never use `Task.Result` or `.Wait()` - always await
+
+## Naming Conventions (Strict)
+
+### Namespaces
+`Nexus.{ServiceName}.{Layer}.Features.{FeatureName}`
+
+Example: `Nexus.CustomerOrder.Application.Features.Accounts`
+
+### CQRS Components
+- Commands: `{Verb}{Entity}Command` → `CreateAccountCommand`, `UpdateAccountCommand`
+- Queries: `Get{Entity}{Context}Query` → `GetAccountByIdQuery`, `GetAccountsQuery`
+- Handlers: `{Verb}{Entity}Handler` → `CreateAccountHandler`
+- DTOs: `{Entity}{Purpose}Dto` → `CreateAccountDto`, `AccountResponseDto`
+
+### API Components
+- Endpoints: `Map{Verb}{Entity}Endpoint` → `MapCreateAccountEndpoint`
+- Groups: `{Entity}Endpoints` → static class with all endpoint methods
+
+### Data Access
+- Interfaces: `I{Entity}Repository` → `IAccountRepository`
+- Implementations: `{Entity}Repository` → `AccountRepository`
+- Table Entities: `{Entity}TableEntity` → `AccountTableEntity`
+- Configs: `{Entity}TableStorageConfiguration` → `AccountsTableStorageConfiguration`
+
+## Code Generation Workflow
+
+When creating a new feature, generate in this order:
+
+1. **Domain Entity** (if needed) - Domain/{Feature}/{Entity}.cs
+2. **Command/Query** - Application/Features/{Feature}/{Action}{Entity}Command.cs
+3. **Handler** - Application/Features/{Feature}/{Action}{Entity}Handler.cs
+4. **Repository Interface** - Application/Features/{Feature}/I{Entity}Repository.cs
+5. **Repository Implementation** - Application/Features/{Feature}/Infrastructure/StorageAccount/{Entity}Repository.cs
+6. **Table Entity** - Application/Features/{Feature}/Infrastructure/StorageAccount/{Entity}TableEntity.cs
+7. **API Endpoint** - Api/Features/{Feature}/{Action}{Entity}Endpoint.cs
+8. **DI Registration** - Update Program.cs or extension methods
+
+Always use primary constructors for dependency injection.
+
+## Required Code Patterns
+
+### MediatR Handler (Primary Constructor)
 ```csharp
-// Pattern for command handlers
-public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Guid>
+public class CreateAccountHandler(IAccountRepository repository) 
+    : IRequestHandler<CreateAccountCommand, Guid>
 {
-    private readonly IAccountRepository _repository;
-    
-    public CreateAccountHandler(IAccountRepository repository) => _repository = repository;
-    
-    public async Task<Guid> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateAccountCommand request, 
+        CancellationToken cancellationToken)
     {
-        // Implementation
+        // Business logic here
     }
 }
 ```
 
-### Minimal API Endpoints
+### Minimal API Endpoint
 ```csharp
-// Pattern for endpoint registration
-public static void Map{Feature}Endpoint(this IEndpointRouteBuilder app)
+app.MapPost("/accounts", async (
+    [FromBody] CreateAccountDto dto,
+    [FromServices] IMediator mediator,
+    CancellationToken cancellationToken) =>
 {
-    app.MapPost("/", async ([FromBody] CreateDto dto, [FromServices] IMediator mediator) =>
-    {
-        var command = new CreateCommand(/* map dto properties */);
-        var result = await mediator.Send(command);
-        return Results.Created($"/{result}", new { id = result });
-    })
-    .WithName("Create{Entity}")
-    .WithSummary("Creates a new {entity}")
-    .WithDescription("Detailed description of the endpoint");
+    var command = new CreateAccountCommand(dto.Name, dto.Email);
+    var id = await mediator.Send(command, cancellationToken);
+    return Results.Created($"/accounts/{id}", new { id });
+})
+.WithName("CreateAccount")
+.WithOpenApi();
+```
+
+### Repository with Primary Constructor
+```csharp
+internal class AccountRepository(
+    ITableClient<AccountsTableStorageConfiguration, AccountTableEntity> tableClient) 
+    : IAccountRepository
+{
+    // Implementation using tableClient
 }
 ```
 
-### Repository Implementation
+### Table Entity Structure
 ```csharp
-// Pattern for repository classes
-internal class AccountRepository : IAccountRepository
+public sealed class AccountTableEntity : ITableEntity
 {
-    private readonly ITableClient<AccountsTableStorageConfiguration, AccountTableEntity> _tableClient;
-    
-    public AccountRepository(ITableClient<AccountsTableStorageConfiguration, AccountTableEntity> tableClient)
-    {
-        _tableClient = tableClient;
-    }
-    
-    public async Task<EntityType> MethodAsync(Parameters, CancellationToken cancellationToken = default)
-    {
-        // Implementation using _tableClient
-    }
-}
-```
-
-### Azure Table Storage Entities
-```csharp
-// Pattern for table entities
-public sealed class EntityTableEntity : ITableEntity
-{
-    public const string DefaultPartitionKey = "entityname";
+    public const string DefaultPartitionKey = "accounts";
     
     public string PartitionKey { get; set; } = DefaultPartitionKey;
     public string RowKey { get; set; } = default!;
     
-    // Entity properties
-    // For complex objects, use flattened properties (Address_Street1, Address_City, etc.)
+    // Properties here
+    // Flatten complex objects: Address_Street, Address_City
     
     public DateTimeOffset? Timestamp { get; set; }
     public ETag ETag { get; set; }
 }
 ```
 
-## Technology Stack Requirements
-- **.NET 9** target framework
-- **Nullable reference types** enabled
-- **Azure.Data.Tables** for storage
-- **MediatR** for CQRS
-- **xUnit + FluentAssertions** for testing
-- **OpenTelemetry** for observability
-
-## Project Structure Context
-```
-src/
-├── Nexus.AppHost/                          # .NET Aspire orchestration
-├── Nexus.ServiceDefaults/                  # Common service configurations
-├── Nexus.CustomerOrder.Api/               # API endpoints (Minimal APIs)
-├── Nexus.CustomerOrder.Application/       # Business logic (MediatR handlers)
-├── Nexus.CustomerOrder.Domain/            # Domain entities and logic
-├── Nexus.Infrastructure.StorageAccount/   # Azure Storage abstractions
-├── Nexus.Shared.Core/                     # Common utilities (Maybe<T>)
-└── Nexus.Shared.Kernel/                   # Serialization and extensions
-
-tests/
-├── Nexus.CustomerOrder.Api.Tests.Units/
-└── Nexus.Infrastructure.StorageAccount.Tests.Units/
-```
-
-## Testing Patterns
-- Use **AAA pattern** (Arrange, Act, Assert)
-- **Integration tests**: Use `WebApplicationFactory` and real storage
-- **Unit tests**: Mock dependencies with NSubstitute
-- **Test naming**: `MethodName_WhenCondition_ThenExpectedResult`
-
 ## Error Handling
-- Use `Maybe<T>` for nullable returns
-- Return proper HTTP status codes (201 for Created, 404 for NotFound, etc.)
-- Include meaningful error messages without exposing sensitive data
 
-## Azure Integration
-- Configure resources via `.NET Aspire` in `AppHost.cs`
-- Use **health checks** for liveness and readiness probes
-- Follow **Azure Container Apps** deployment patterns
-- Implement **OpenTelemetry** tracing and metrics
+- Use `Maybe<T>` from Nexus.Shared.Core for nullable returns
+- Throw specific exceptions: `ArgumentNullException`, `InvalidOperationException`, `KeyNotFoundException`
+- Never throw generic `Exception`
+- Return proper HTTP status codes: 200 OK, 201 Created, 400 BadRequest, 404 NotFound
+- Error messages should be helpful but not expose internals
 
-## Code Quality Rules
-- Follow `.editorconfig` formatting rules
-- Include **XML documentation** for public APIs
-- Use **async/await** for I/O operations
-- Apply **SOLID principles** and Clean Architecture
-- Maintain **immutability** where appropriate
+## Testing Requirements
 
-## Common Anti-Patterns to Avoid
-- Don't put business logic in API controllers
-- Don't reference infrastructure from domain layer
-- Don't use generic Exception types
-- Don't ignore cancellation tokens
-- Don't create circular dependencies between layers
+When generating or modifying code, ALWAYS offer to create unit tests.
 
-## Reference Files for Patterns
-- Domain Entity: `src/Nexus.CustomerOrder.Domain/Features/Accounts/Account.cs`
-- MediatR Handler: `src/Nexus.CustomerOrder.Application/Features/Accounts/CreateAccountHandler.cs`
-- Repository: `src/Nexus.CustomerOrder.Application/Features/Accounts/Infrastructure/StorageAccount/AccountRepository.cs`
-- API Endpoint: `src/Nexus.CustomerOrder.Api/Features/Accounts/AccountCreate/CreateAccountEndpoint.cs`
-- Table Entity: `src/Nexus.CustomerOrder.Application/Features/Accounts/Infrastructure/StorageAccount/AccountTableEntity.cs`
+### Test Standards
+- Framework: xUnit with `[Fact]` and `[Theory]`
+- Assertions: FluentAssertions (`.Should()` syntax)
+- Mocking: NSubstitute
+- Naming: `MethodName_WhenCondition_ThenExpectedBehavior`
+- Structure: Arrange, Act, Assert (blank lines between)
+- Coverage: All public methods, edge cases, null checks
 
-For comprehensive guidelines and templates, see: `docs/PROMPT_GUIDE.md`
+### Test Example Pattern
+```csharp
+[Fact]
+public async Task Handle_WhenValidCommand_ThenCreatesAccount()
+{
+    // Arrange
+    var repository = Substitute.For<IAccountRepository>();
+    var handler = new CreateAccountHandler(repository);
+    var command = new CreateAccountCommand("Test", "test@example.com");
+
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.Should().NotBeEmpty();
+    await repository.Received(1).CreateAsync(Arg.Any<Account>(), Arg.Any<CancellationToken>());
+}
+```
+
+## Code Quality Checklist
+
+Before completing any code generation:
+- [ ] XML documentation on public APIs
+- [ ] All async methods have CancellationToken parameter
+- [ ] Using nullable reference types correctly (no null warnings)
+- [ ] Primary constructors for dependency injection
+- [ ] No business logic in API endpoints
+- [ ] Repository interfaces in Application, implementations in Infrastructure
+- [ ] Proper error handling with specific exceptions
+- [ ] Tests offered for new/modified code
+
+## Azure & Deployment
+
+- Configure resources via .NET Aspire AppHost
+- Include health checks for Container Apps
+- Use OpenTelemetry for distributed tracing
+- Follow 12-factor app principles
+- Environment-specific settings in appsettings.{Environment}.json
+
+## What NOT to Do
+
+- ❌ Don't use `Task.Result` or `.Wait()` - causes deadlocks
+- ❌ Don't ignore CancellationToken - breaks graceful shutdown
+- ❌ Don't put queries in command handlers or vice versa
+- ❌ Don't create anemic domain models (logic belongs in domain)
+- ❌ Don't use reflection for configuration - use strongly-typed classes
+- ❌ Don't log sensitive data (passwords, tokens, PII)
+
+---
+
+For detailed examples, examine existing features in the codebase. This file contains rules, not comprehensive templates.
