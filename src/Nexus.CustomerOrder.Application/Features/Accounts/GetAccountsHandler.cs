@@ -15,9 +15,12 @@ internal class GetAccountsHandler : IRequestHandler<GetAccountsCommand, PagedRes
 
     public async Task<PagedResult<GetAccountDto>> Handle(GetAccountsCommand request, CancellationToken cancellationToken)
     {
-        var page = await _repository.QueryAsync(request.PageSize, request.ContinuationToken, cancellationToken);
+        var pagedEntities = await _repository.QueryAsync(
+            request.PageSize,
+            request.ContinuationToken,
+            cancellationToken);
 
-        var items = page.Values.Select(e => new GetAccountDto(
+        var items = pagedEntities.Items.Select(e => new GetAccountDto(
             e.RowKey,
             e.FirstName,
             e.LastName,
@@ -36,6 +39,6 @@ internal class GetAccountsHandler : IRequestHandler<GetAccountsCommand, PagedRes
             )
         )).ToList();
 
-        return new PagedResult<GetAccountDto>(items, page.ContinuationToken);
+        return new PagedResult<GetAccountDto>(items, pagedEntities.ContinuationToken);
     }
 }

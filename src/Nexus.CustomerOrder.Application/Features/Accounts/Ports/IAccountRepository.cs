@@ -1,13 +1,17 @@
-﻿using Azure;
-using Nexus.CustomerOrder.Application.Features.Accounts.Infrastructure.StorageAccount;
+﻿using Nexus.CustomerOrder.Application.Features.Accounts.Infrastructure.StorageAccount;
+using Nexus.CustomerOrder.Application.Shared.Results;
 using Nexus.CustomerOrder.Domain.Features.Accounts;
-using System.Runtime.CompilerServices;
 
 namespace Nexus.CustomerOrder.Application.Features.Accounts.Ports;
 
 public interface IAccountRepository
 {
-    Task<Page<AccountTableEntity>?> QueryAsync(int pageSize, string? continuationToken = null, [EnumeratorCancellation] CancellationToken cancellationToken = default);
+    //Task<Page<AccountTableEntity>?> QueryAsync(int pageSize, string? continuationToken = null, [EnumeratorCancellation] CancellationToken cancellationToken = default);
+
+    Task<PagedResult<AccountTableEntity>> QueryAsync(
+        int pageSize,
+        string? continuationToken = null,
+        CancellationToken cancellationToken = default);
 
     Task AddAsync(Account account, CancellationToken cancellationToken = default);
 

@@ -2,6 +2,7 @@
 using Azure.Core;
 using Microsoft.Extensions.Logging;
 using Nexus.CustomerOrder.Application.Features.Accounts.Ports;
+using Nexus.CustomerOrder.Application.Shared.Results;
 using Nexus.CustomerOrder.Domain.Features.Accounts;
 using Nexus.Infrastructure.StorageAccount.Partitioning;
 using Nexus.Infrastructure.StorageAccount.Tables.Client;
@@ -55,27 +56,61 @@ internal class AccountRepository : IAccountRepository
         await _tableClient.AddAsync(entity);
     }
 
-    public async Task<Page<AccountTableEntity>?> QueryAsync(
-        int pageSize,
-        string? continuationToken = null,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AccountTableEntity>> QueryAsync(
+    int pageSize,
+    string? continuationToken = null,
+    CancellationToken cancellationToken = default)
     {
-        var normalizedToken = string.IsNullOrEmpty(continuationToken) ||
-                         continuationToken.Equals("null", StringComparison.OrdinalIgnoreCase)
-        ? null
-        : continuationToken;
+        var skip = string.IsNullOrWhiteSpace(continuationToken)
+            ? 0
+            : int.TryParse(continuationToken, out var s) ? s : 0;
 
-        // Use range comparison
-        var query = _tableClient.QueryAsync(
-            filter: e => e.PartitionKey.CompareTo("ACC") >= 0 && e.PartitionKey.CompareTo("ACD") < 0,
-            pageSize: pageSize);
+        var allPartitions = _partitionStrategy.GetAllPartitionKeys().ToList();
 
-        await foreach (var page in query.AsPages(normalizedToken, pageSize).WithCancellation(cancellationToken))
+        _logger.LogDebug(
+            "Querying {PartitionCount} partitions, skip={Skip}, pageSize={PageSize}",
+            allPartitions.Count,
+            skip,
+            pageSize);
+
+        // Query all partitions in parallel
+        var queryTasks = allPartitions.Select(async partition =>
         {
-            return page;
-        }
+            var results = new List<AccountTableEntity>();
+            var query = _tableClient.QueryAsync(
+                filter: e => e.PartitionKey == partition);
 
-        return null;
+            await foreach (var entity in query.WithCancellation(cancellationToken))
+            {
+                results.Add(entity);
+            }
+            return results;
+        });
+
+        var partitionResults = await Task.WhenAll(queryTasks);
+
+        // Flatten, sort, and page
+        var allEntities = partitionResults
+            .SelectMany(r => r)
+            .OrderBy(e => e.LastName)
+            .ThenBy(e => e.FirstName)
+            .ThenBy(e => e.RowKey)
+            .Skip(skip)
+            .Take(pageSize + 1)
+            .ToList();
+
+        var hasMore = allEntities.Count > pageSize;
+        var pagedEntities = allEntities.Take(pageSize).ToList();
+        var nextToken = hasMore ? (skip + pageSize).ToString() : null;
+
+        _logger.LogInformation(
+            "Returning {Count} accounts, hasMore={HasMore}, nextToken={Token}",
+            pagedEntities.Count,
+            hasMore,
+            nextToken ?? "null");
+
+        // Return custom PagedResult
+        return new PagedResult<AccountTableEntity>(pagedEntities, nextToken);
     }
 
     public async Task<AccountTableEntity?> GetByIdAsync(
