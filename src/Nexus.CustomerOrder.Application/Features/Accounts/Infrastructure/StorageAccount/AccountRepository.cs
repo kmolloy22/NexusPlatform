@@ -60,7 +60,7 @@ internal class AccountRepository : IAccountRepository
     string? continuationToken = null,
     CancellationToken cancellationToken = default)
     {
-        var skip = string.IsNullOrWhiteSpace(continuationToken)
+        var skip = continuationToken.IsMissing()
             ? 0
             : int.TryParse(continuationToken, out var s) ? s : 0;
 
