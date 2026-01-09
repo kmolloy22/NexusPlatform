@@ -7,7 +7,6 @@ using Nexus.CustomerOrder.Domain.Features.Accounts;
 using Nexus.Infrastructure.StorageAccount.Partitioning;
 using Nexus.Infrastructure.StorageAccount.Tables.Client;
 using Nexus.Shared.Kernel.Extensions;
-using System.Runtime.CompilerServices;
 
 namespace Nexus.CustomerOrder.Application.Features.Accounts.Infrastructure.StorageAccount;
 
@@ -182,7 +181,6 @@ internal class AccountRepository : IAccountRepository
 
         return true;
     }
-
 
     // Helper class for creating Page<T>
     private class MockResponse : Response
