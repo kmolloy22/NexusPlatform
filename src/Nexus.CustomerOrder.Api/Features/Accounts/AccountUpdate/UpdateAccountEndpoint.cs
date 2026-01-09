@@ -22,6 +22,7 @@ public static class UpdateAccountEndpoint
                 dto.LastName,
                 dto.Email,
                 dto.Phone,
+                dto.IsActive,
                 new Domain.Features.Accounts.Address(
                     dto.Address.Street1,
                     dto.Address.Street2,

@@ -5,4 +5,5 @@ public  record CreateAccountDto(
     string LastName,
     string Phone,
     string? Email,
+    bool? IsActive,
     AddressDto Address);

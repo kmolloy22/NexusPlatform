@@ -9,6 +9,7 @@ public record CreateAccountCommand(
     string LastName,
     string? Email,
     string? Phone,
+    bool? IsActive,
     Address Address
 ) : IRequest<CreateAccountResult>;
 
@@ -26,6 +27,7 @@ public class CreateAccountHandler(IAccountRepository repository) : IRequestHandl
             request.LastName,
             request.Email,
             request.Phone,
+            request.IsActive,
             request.Address);
 
         await repository.AddAsync(account, cancellationToken);

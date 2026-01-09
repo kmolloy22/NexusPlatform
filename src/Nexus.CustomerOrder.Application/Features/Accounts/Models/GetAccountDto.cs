@@ -5,5 +5,7 @@ public record GetAccountDto(
     string LastName,
     string? Email,
     string Phone,
-
+    bool? IsActive,
+    DateTime CreatedAt,
+    DateTime? ModifiedUtc,
     AddressDto Address);

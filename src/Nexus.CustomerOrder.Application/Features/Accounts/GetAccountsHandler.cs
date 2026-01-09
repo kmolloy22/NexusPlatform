@@ -23,6 +23,9 @@ internal class GetAccountsHandler : IRequestHandler<GetAccountsCommand, PagedRes
             e.LastName,
             e.Email,
             e.PhoneNumber ?? string.Empty,
+            e.IsActive,
+            e.CreatedUtc,
+            e.ModifiedUtc,
             new AddressDto(
                 e.Address_Street1,
                 e.Address_Street2,

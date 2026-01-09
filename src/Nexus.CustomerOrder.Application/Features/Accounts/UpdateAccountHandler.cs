@@ -10,6 +10,7 @@ public record UpdateAccountCommand(
     string LastName,
     string? Email,
     string? Phone,
+    bool? IsActive,
     Address Address) : IRequest<bool>;
 
 internal class UpdateAccountHandler(IAccountRepository repository) : IRequestHandler<UpdateAccountCommand, bool>
@@ -22,6 +23,7 @@ internal class UpdateAccountHandler(IAccountRepository repository) : IRequestHan
             request.LastName,
             request.Email,
             request.Phone,
+            request.IsActive,
             request.Address,
             cancellationToken);
     }

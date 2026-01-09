@@ -3,6 +3,7 @@ using Nexus.CustomerOrder.Api.Features.Accounts;
 using Nexus.CustomerOrder.Application.Features.Accounts;
 using Nexus.CustomerOrder.Application.Features.Accounts.Extensions;
 using Nexus.CustomerOrder.Application.Features.Accounts.Validation;
+using Nexus.Infrastructure.StorageAccount;
 
 // Access configuration via builder.Configuration instead of sp.Configuration
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Register MediatR � scan Application assembly for handlers
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(CreateAccountHandler).Assembly));
+
+builder.Services.AddPartitioningStrategy(builder.Configuration);
 
 // Register the Create Account feature (adds ITableClient<AccountsTableStorageConfiguration, AccountTableEntity>)
 builder.Services.AddAccountsInfrastructure();

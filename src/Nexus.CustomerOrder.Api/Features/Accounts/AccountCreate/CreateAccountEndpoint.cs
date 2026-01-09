@@ -28,6 +28,7 @@ public static class CreateAccountEndpoint
                 dto.LastName,
                 dto.Email,
                 dto.Phone,
+                dto.IsActive,
                 address);
 
             var result = await mediator.Send(command);

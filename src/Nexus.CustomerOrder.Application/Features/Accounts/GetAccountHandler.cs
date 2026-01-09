@@ -23,7 +23,10 @@ internal class GetAccountHandler(IAccountRepository repository) : IRequestHandle
 			entity.FirstName,
 			entity.LastName,
 			entity.Email,
-			entity.PhoneNumber ?? string.Empty,
+			entity.PhoneNumber,
+			entity.IsActive,
+			entity.CreatedUtc,
+			entity.ModifiedUtc,
 			new AddressDto(
 				entity.Address_Street1,
 				entity.Address_Street2,
