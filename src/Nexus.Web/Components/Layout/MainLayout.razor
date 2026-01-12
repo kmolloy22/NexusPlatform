@@ -1,0 +1,64 @@
+﻿@using MudBlazor
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" 
+                      Color="Color.Inherit" 
+                      Edge="Edge.Start" 
+                      OnClick="@ToggleDrawer" />
+        <MudText Typo="Typo.h5" Class="ml-3">Nexus Platform</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" />
+        <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" 
+              ClipMode="DrawerClipMode.Always" 
+              Elevation="2">
+        <MudNavMenu>
+            <MudNavLink Href="/" 
+                       Match="NavLinkMatch.All" 
+                       Icon="@Icons.Material.Filled.Dashboard">
+                Dashboard
+            </MudNavLink>
+            <MudNavLink Href="/accounts" 
+                       Match="NavLinkMatch.Prefix" 
+                       Icon="@Icons.Material.Filled.People">
+                Accounts
+            </MudNavLink>
+            <MudNavLink Href="/orders" 
+                       Match="NavLinkMatch.Prefix" 
+                       Icon="@Icons.Material.Filled.ShoppingCart"
+                       Disabled="true">
+                Orders
+            </MudNavLink>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="/settings" 
+                       Icon="@Icons.Material.Filled.Settings"
+                       Disabled="true">
+                Settings
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

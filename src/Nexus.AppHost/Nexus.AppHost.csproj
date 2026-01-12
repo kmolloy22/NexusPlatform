@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nexus.CustomerOrder.Api\Nexus.CustomerOrder.Api.csproj" />
+    <ProjectReference Include="..\Nexus.Web\Nexus.Web.csproj" />
   </ItemGroup>
 
 </Project>

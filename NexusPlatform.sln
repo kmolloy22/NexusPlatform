@@ -49,6 +49,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Migration.Tool", "tools\Nexus.Migration.Tool\Nexus.Migration.Tool.csproj", "{D498AA59-ABFF-42E8-83A2-EACE6ED73CB5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frontend", "Frontend", "{1B43E691-08FB-467E-943E-8623E1BB8565}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Web", "src\Nexus.Web\Nexus.Web.csproj", "{1E6B880C-1828-4990-944B-4E42EBB913E0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +107,10 @@ Global
 		{D498AA59-ABFF-42E8-83A2-EACE6ED73CB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D498AA59-ABFF-42E8-83A2-EACE6ED73CB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D498AA59-ABFF-42E8-83A2-EACE6ED73CB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E6B880C-1828-4990-944B-4E42EBB913E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E6B880C-1828-4990-944B-4E42EBB913E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E6B880C-1828-4990-944B-4E42EBB913E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E6B880C-1828-4990-944B-4E42EBB913E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -122,6 +130,7 @@ Global
 		{A51C6965-ED41-4728-A600-D08B5A0DE503} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{2E924F33-2B2F-4F15-98D4-61FC29BF2972} = {A8A47DC1-D12B-40F3-A8C7-79D325359CAE}
 		{D498AA59-ABFF-42E8-83A2-EACE6ED73CB5} = {1E0D4CBB-00BC-456E-A86B-ED8230608E24}
+		{1E6B880C-1828-4990-944B-4E42EBB913E0} = {1B43E691-08FB-467E-943E-8623E1BB8565}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BE39723A-5E17-4772-B802-8B2ED3E8E024}

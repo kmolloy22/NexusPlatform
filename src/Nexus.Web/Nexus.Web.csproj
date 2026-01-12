@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- UI Component Library - Choose one -->
+    <PackageReference Include="MudBlazor" Version="8.0.0" />
+
+    <!-- HTTP Client helpers -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="9.0.4" />
+
+    <!-- Optional: Type-safe API client -->
+    <PackageReference Include="Refit" Version="8.0.0" />
+    <PackageReference Include="Refit.HttpClientFactory" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference shared contracts -->
+    <ProjectReference Include="..\Nexus.CustomerOrder.Application\Nexus.CustomerOrder.Application.csproj" />
+    <ProjectReference Include="..\Nexus.ServiceDefaults\Nexus.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Nexus.Shared.Kernel\Nexus.Shared.Kernel.csproj" />
+  </ItemGroup>
+
+</Project>

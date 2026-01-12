@@ -4,25 +4,6 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// var entraValidAudience = builder.AddParameter("EntraValidAudience");
-// var entraAuthority = builder.AddParameter("EntraAuthority");
-// var apiAccessScope = builder.AddParameter("ApiAccessScope");
-
-//var database = builder.AddAzurePostgresFlexibleServer("postgres")
-//                    .RunAsContainer(postgres =>
-//                    {
-//                        postgres.WithHostPort(5432);
-//                        postgres.WithImageTag("17.4");
-//                        postgres.WithDataVolume();
-//                        postgres.WithLifetime(ContainerLifetime.Persistent);
-//                        postgres.WithPgAdmin(pgAdmin =>
-//                        {
-//                            pgAdmin.WithHostPort(5050);
-//                            pgAdmin.WithLifetime(ContainerLifetime.Persistent);
-//                        });
-//                    })
-//                    .AddDatabase("TemplateAppDB", "templateapp");
-
 var storage = builder.AddAzureStorage("storage")
                 .ConfigureInfrastructure(infra =>
                 {
@@ -45,71 +26,65 @@ var tables = storage.AddTables("Tables");
 
 var healthPort = 8081;
 
+// API Project
 var api = builder.AddProject<Nexus_CustomerOrder_Api>("nexus-customer-order-api")
-                //.WithReference(database)
-                //.WaitFor(database)
                 .WithReference(blobs)
                 .WithReference(tables)
                 .WaitFor(blobs)
                 .WaitFor(tables)
-                // .WithEnvironment(
-                //     "Authentication__Schemes__Entra__ValidAudience",
-                //     entraValidAudience)
-                // .WithEnvironment(
-                //     "Authentication__Schemes__Entra__Authority",
-                //     entraAuthority)
-                // .WithEnvironment(
-                //     "ApiAccessScope",
-                //     apiAccessScope)
                 .WithExternalHttpEndpoints()
-                .PublishAsAzureContainerApp((infra, containerApp) =>
-                {
-                    var container = containerApp.Template.Containers.Single().Value;
-
-                    container?.Probes.Add(new ContainerAppProbe
-                    {
-                        ProbeType = ContainerAppProbeType.Liveness,
-                        HttpGet = new ContainerAppHttpRequestInfo
-                        {
-                            Path = "/health/alive",
-                            Port = healthPort,
-                            Scheme = ContainerAppHttpScheme.Http
-                        },
-                        PeriodSeconds = 10
-                    });
-
-                    container?.Probes.Add(new ContainerAppProbe
-                    {
-                        ProbeType = ContainerAppProbeType.Readiness,
-                        HttpGet = new ContainerAppHttpRequestInfo
-                        {
-                            Path = "/health/ready",
-                            Port = healthPort,
-                            Scheme = ContainerAppHttpScheme.Http
-                        },
-                        PeriodSeconds = 10
-                    });
-
-                    containerApp.Template.Scale.MinReplicas = 0;
-                    containerApp.Template.Scale.MaxReplicas = 10;
-                })
                 .WithEnvironment("HTTP_PORTS", $"8080;{healthPort.ToString()}");
 
-//if (builder.ExecutionContext.IsPublishMode)
-//{
-//    var blobEndpoint = ReferenceExpression.Create(
-//        $"{storage.GetOutput("blobEndpoint")}"
-//    );
+// Blazor Web Project - automatically gets API URL via service discovery
+var web = builder.AddProject<Nexus_Web>("nexus-customer-order-web")
+                .WithReference(api)  // ← API URL auto-injected!
+                .WithExternalHttpEndpoints();
 
-//    var frontDoor = builder.AddBicepTemplate(
-//        "frontdoor",
-//        "./bicep/frontdoor.bicep")
-//        .WithParameter("location", "Global")
-//        .WithParameter("storageBlobEndpoint", blobEndpoint);
+// Only add Azure deployment config in publish mode
+if (builder.ExecutionContext.IsPublishMode)
+{
+    api.PublishAsAzureContainerApp((infra, containerApp) =>
+    {
+        var container = containerApp.Template.Containers.Single().Value;
 
-//    api.WithEnvironment(
-//        "AZURE_FRONTDOOR_HOSTNAME",
-//        frontDoor.GetOutput("frontDoorEndpointHostName"));
-//}
+        container?.Probes.Add(new ContainerAppProbe
+        {
+            ProbeType = ContainerAppProbeType.Liveness,
+            HttpGet = new ContainerAppHttpRequestInfo
+            {
+                Path = "/health/alive",
+                Port = healthPort,
+                Scheme = ContainerAppHttpScheme.Http
+            },
+            PeriodSeconds = 10
+        });
+
+        container?.Probes.Add(new ContainerAppProbe
+        {
+            ProbeType = ContainerAppProbeType.Readiness,
+            HttpGet = new ContainerAppHttpRequestInfo
+            {
+                Path = "/health/ready",
+                Port = healthPort,
+                Scheme = ContainerAppHttpScheme.Http
+            },
+            PeriodSeconds = 10
+        });
+
+        containerApp.Template.Scale.MinReplicas = 0;
+        containerApp.Template.Scale.MaxReplicas = 10;
+    })
+                .WithEnvironment("HTTP_PORTS", $"8080;{healthPort.ToString()}");
+
+    // Blazor Web Project
+    web = builder.AddProject<Nexus_Web>("nexus-customer-order-web")
+                    .WithReference(api)  // Service discovery - automatically configures ApiBaseUrl
+                    .WithExternalHttpEndpoints()
+                    .PublishAsAzureContainerApp((infra, containerApp) =>
+                    {
+                        containerApp.Template.Scale.MinReplicas = 0;
+                        containerApp.Template.Scale.MaxReplicas = 5;
+                    });
+}
 
 builder.Build().Run();
