@@ -5,12 +5,14 @@ using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Blazor services
+// Add service defaults first
 builder.AddServiceDefaults();
+
+// Add Blazor services
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add MudBlazor
+// Add MudBlazor with default configuration
 builder.Services.AddMudServices();
 
 // Configure API Client with Refit + Service Discovery
@@ -22,7 +24,7 @@ var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
 builder.Services.AddRefitClient<IAccountsApiClient>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl))
     .AddStandardResilienceHandler(); // Retry, timeout, circuit breaker
-    //.AddServiceDiscovery(); // ← Enables service discovery!
+                                     //.AddServiceDiscovery(); // ← Enables service discovery!
 
 var app = builder.Build();
 

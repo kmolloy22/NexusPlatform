@@ -2,6 +2,55 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudPaper Class="pa-8" Elevation="3">
+        <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">
+            Welcome to Nexus Platform
+        </MudText>
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-4">
+            Modern Customer & Order Management System
+        </MudText>
 
-Welcome to your new app.
+        <MudDivider Class="my-4" />
+
+        <MudGrid Spacing="3" Class="mt-4">
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+                        <MudText Typo="Typo.h6">Account Management</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2">
+                            Create, view, and manage customer accounts with comprehensive details and address information.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/accounts">
+                            View Accounts
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+                        <MudText Typo="Typo.h6">Order Processing</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2">
+                            Track and manage customer orders throughout their lifecycle. (Coming Soon)
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Secondary" Disabled="true">
+                            Coming Soon
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudAlert Severity="Severity.Info" Class="mt-6">
+            <strong>Getting Started:</strong> Navigate to Accounts to begin managing your customer data.
+        </MudAlert>
+    </MudPaper>
+</MudContainer>
