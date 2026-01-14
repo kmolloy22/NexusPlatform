@@ -1,0 +1,84 @@
+﻿@page "/test"
+@rendermode InteractiveServer
+
+<PageTitle>Interactivity Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h4" GutterBottom="true">Interactivity Test Page</MudText>
+
+        <MudAlert Severity="Severity.Info" Class="my-4">
+            Click Count: @_clickCount
+        </MudAlert>
+
+        <MudStack Spacing="3">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="IncrementCounter">
+                Click Me (@_clickCount)
+            </MudButton>
+
+            <MudTextField @bind-Value="_textValue"
+                          Label="Type something"
+                          Variant="Variant.Outlined" />
+
+            <MudAlert Severity="Severity.Success">
+                You typed: @_textValue
+            </MudAlert>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       OnClick="OpenTestDialog">
+                Open Test Dialog
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Tertiary"
+                       OnClick="ShowSnackbar">
+                Show Snackbar
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private int _clickCount = 0;
+    private string _textValue = "";
+
+    private void IncrementCounter()
+    {
+        _clickCount++;
+        Console.WriteLine($"Counter clicked: {_clickCount}");
+    }
+
+    private void ShowSnackbar()
+    {
+        Snackbar.Add("Snackbar works!", Severity.Success);
+        Console.WriteLine("Snackbar triggered");
+    }
+
+    private async Task OpenTestDialog()
+    {
+        Console.WriteLine("Opening test dialog...");
+
+        var result = await DialogService.ShowMessageBox(
+            "Test Dialog",
+            "Can you see this dialog?",
+            yesText: "Yes",
+            cancelText: "No");
+
+        Console.WriteLine($"Dialog result: {result}");
+
+        if (result == true)
+        {
+            Snackbar.Add("You clicked Yes!", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("You clicked No or closed", Severity.Info);
+        }
+    }
+}

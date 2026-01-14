@@ -1,5 +1,5 @@
 ﻿@page "/accounts"
-@rendermode InteractiveServer
+
 @using Nexus.CustomerOrder.Application.Features.Accounts.Models
 @using Nexus.Web.Components.Dialogs
 @using Nexus.Web.Services
@@ -47,7 +47,8 @@
         </MudAlert>
     }
 
-    <MudTable Items="_accounts"
+    <!-- MUDTABLE UPDATED: Use FilteredAccounts instead of _accounts -->
+    <MudTable Items="FilteredAccounts"
               Hover="true"
               Striped="true"
               Dense="true"
@@ -148,6 +149,18 @@
 
     private const int PageSize = 50;
 
+    // NEW: Computed property for client-side filtering
+    private IEnumerable<GetAccountDto> FilteredAccounts =>
+        string.IsNullOrWhiteSpace(_searchText)
+            ? _accounts
+            : _accounts.Where(a =>
+                (a.FirstName + " " + a.LastName)
+                    .Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                (a.Email?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Phone?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Address.City?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+
     protected override async Task OnInitializedAsync()
         => await LoadAccounts();
 
@@ -184,8 +197,9 @@
     private Task LoadMoreAccounts()
         => LoadAccounts(append: true);
 
+    // Removed server-side search, no API call needed
     private Task OnSearch()
-        => LoadAccounts();
+        => Task.CompletedTask;
 
     private async Task OpenCreateDialog()
     {
@@ -260,3 +274,321 @@
     private static string GetInitials(string firstName, string lastName)
         => $"{firstName[0]}{lastName[0]}".ToUpperInvariant();
 }
+
+@* @page "/accounts"
+
+<PageTitle>Accounts</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Account Management</MudText>
+
+    <!-- Debug Info -->
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        Page Render Count: @_renderCount | Loading: @_loading | Accounts: @_accounts.Count
+    </MudAlert>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudTextField @bind-Value="_searchText" 
+                         Placeholder="Search accounts..." 
+                         Adornment="Adornment.Start" 
+                         AdornmentIcon="@Icons.Material.Filled.Search"
+                         Immediate="true"
+                         Class="flex-grow-1 mr-4" />
+            
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.Add"
+                      OnClick="TestButtonClick">
+                Test Button
+            </MudButton>
+            
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Success" 
+                      StartIcon="@Icons.Material.Filled.Add"
+                      OnClick="OpenCreateDialog">
+                Create Account
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+    
+    @if (_error != null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    }
+
+    <MudTable Items="@_accounts" 
+              Hover="true" 
+              Striped="true" 
+              Dense="true"
+              Loading="@_loading"
+              LoadingProgressColor="Color.Info">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>City</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Created</MudTh>
+            <MudTh Style="text-align: right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudAvatar Color="Color.Primary" Size="Size.Small">
+                        @GetInitials(context.FirstName, context.LastName)
+                    </MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.body2">
+                            <strong>@context.FirstName @context.LastName</strong>
+                        </MudText>
+                    </div>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Email">
+                @(context.Email ?? "—")
+            </MudTd>
+            <MudTd DataLabel="Phone">@context.Phone</MudTd>
+            <MudTd DataLabel="City">@context.Address.City</MudTd>
+            <MudTd>
+                @if (context.IsActive is true)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                        Active
+                    </MudChip>
+                }
+                else if (context.IsActive is false)
+                {
+                    <MudChip T="string" Size="Size.Small">
+                        Inactive
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                        Unknown
+                    </MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Created">
+                @context.CreatedAt.ToString("MMM dd, yyyy")
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align: right">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                              Size="Size.Small" 
+                              Color="Color.Primary"
+                              OnClick="@(() => OpenEditDialog(context))"
+                              Title="Edit" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                              Size="Size.Small" 
+                              Color="Color.Error"
+                              OnClick="@(() => DeleteAccount(context))"
+                              Title="Delete" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="pa-4">
+                No accounts found. Create your first account to get started.
+            </MudText>
+        </NoRecordsContent>
+    </MudTable>
+
+    @if (_hasMorePages)
+    {
+        <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
+            <MudButton Variant="Variant.Outlined" 
+                      Color="Color.Primary"
+                      OnClick="LoadMoreAccounts"
+                      Disabled="@_loading">
+                Load More
+            </MudButton>
+        </MudStack>
+    }
+</MudContainer>
+
+@code {
+    [Inject] private IAccountsApiClient AccountsApi { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private ILogger<Accounts> Logger { get; set; } = default!;
+
+    private List<GetAccountDto> _accounts = new();
+    private bool _loading;
+    private string? _error;
+    private string? _continuationToken;
+    private bool _hasMorePages;
+    private string _searchText = string.Empty;
+    private int _renderCount = 0;
+    private const int PageSize = 50;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _renderCount++;
+        Logger.LogInformation("Accounts page initialized (Render #{Count})", _renderCount);
+        await LoadAccounts();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Logger.LogInformation("Accounts page first render complete");
+        }
+    }
+
+    private void TestButtonClick()
+    {
+        _renderCount++;
+        Logger.LogInformation("Test button clicked! Render count: {Count}", _renderCount);
+        Snackbar.Add($"Button clicked! Render: {_renderCount}", Severity.Success);
+        StateHasChanged();
+    }
+
+    private async Task LoadAccounts(bool append = false)
+    {
+        try
+        {
+            _loading = true;
+            _error = null;
+            Logger.LogInformation("Loading accounts (append: {Append})...", append);
+
+            var result = await AccountsApi.GetAccountsAsync(
+                take: PageSize,
+                continuationToken: append ? _continuationToken : null);
+
+            Logger.LogInformation("Loaded {Count} accounts", result.Items.Count());
+
+            if (append)
+            {
+                _accounts.AddRange(result.Items);
+            }
+            else
+            {
+                _accounts = result.Items.ToList();
+            }
+
+            _continuationToken = result.ContinuationToken;
+            _hasMorePages = !string.IsNullOrEmpty(result.ContinuationToken);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load accounts: {ex.Message}";
+            Logger.LogError(ex, "Error loading accounts");
+            Snackbar.Add(_error, Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadMoreAccounts()
+    {
+        Logger.LogInformation("Load more clicked");
+        await LoadAccounts(append: true);
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        Logger.LogInformation("Opening create dialog");
+        Snackbar.Add("Opening create dialog...", Severity.Info);
+        
+        var parameters = new DialogParameters<AccountFormDialog>
+        {
+            { x => x.IsEditMode, false }
+        };
+
+        var options = new DialogOptions 
+        { 
+            CloseButton = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<AccountFormDialog>(
+            "Create Account", 
+            parameters, 
+            options);
+
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadAccounts();
+            Snackbar.Add("Account created successfully!", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(GetAccountDto account)
+    {
+        Logger.LogInformation("Opening edit dialog for account {Id}", account.id);
+        
+        var parameters = new DialogParameters<AccountFormDialog>
+        {
+            { x => x.IsEditMode, true },
+            { x => x.AccountId, account.id },
+            { x => x.ExistingAccount, account }
+        };
+
+        var options = new DialogOptions 
+        { 
+            CloseButton = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<AccountFormDialog>(
+            "Edit Account", 
+            parameters, 
+            options);
+
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadAccounts();
+            Snackbar.Add("Account updated successfully!", Severity.Success);
+        }
+    }
+
+    private async Task DeleteAccount(GetAccountDto account)
+    {
+        Logger.LogInformation("Delete requested for account {Id}", account.id);
+        
+        var confirm = await DialogService.ShowMessageBox(
+            "Delete Account",
+            $"Are you sure you want to delete {account.FirstName} {account.LastName}?",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await AccountsApi.DeleteAccountAsync(account.id);
+                _accounts.Remove(account);
+                Snackbar.Add("Account deleted successfully!", Severity.Success);
+                Logger.LogInformation("Account {Id} deleted", account.id);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting account {Id}", account.id);
+                Snackbar.Add($"Failed to delete account: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string GetInitials(string firstName, string lastName)
+    {
+        if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+            return "??";
+        return $"{firstName[0]}{lastName[0]}".ToUpper();
+    }
+} *@
+
+

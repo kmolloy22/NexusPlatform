@@ -1,11 +1,291 @@
-﻿@rendermode InteractiveServer
+﻿@* @using MudBlazor
+
+@using Nexus.CustomerOrder.Application.Features.Accounts.Models
+@using Nexus.Web.Services
+@using System.ComponentModel.DataAnnotations
+
+<MudDialog>
+    <DialogContent>
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            Dialog is interactive! IsEditMode: @IsEditMode
+        </MudAlert>
+
+        <MudForm @ref="_form" @bind-IsValid="@_isValid">
+            <MudGrid>
+                <!-- Personal Information -->
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mb-2">Personal Information</MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.FirstName"
+                                  Label="First Name"
+                                  Required="true"
+                                  RequiredError="First name is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.LastName"
+                                  Label="Last Name"
+                                  Required="true"
+                                  RequiredError="Last name is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Email"
+                                  Label="Email"
+                                  InputType="InputType.Email"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Phone"
+                                  Label="Phone"
+                                  Required="true"
+                                  RequiredError="Phone is required"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Format: +1234567890" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSwitch @bind-Value="_model.IsActive"
+                               Label="Active"
+                               Color="Color.Success" />
+                </MudItem>
+
+                <!-- Address Information -->
+                <MudItem xs="12">
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.h6" Class="mb-2">Address</MudText>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_model.Address.Street1"
+                                  Label="Street Address"
+                                  Required="true"
+                                  RequiredError="Street address is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_model.Address.Street2"
+                                  Label="Street Address 2"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Apartment, suite, etc. (optional)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Address.City"
+                                  Label="City"
+                                  Required="true"
+                                  RequiredError="City is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Address.State"
+                                  Label="State/Province"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Address.PostalCode"
+                                  Label="Postal Code"
+                                  Required="true"
+                                  RequiredError="Postal code is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Address.Country"
+                                  Label="Country Code"
+                                  Required="true"
+                                  RequiredError="Country code is required"
+                                  Variant="Variant.Outlined"
+                                  HelperText="2-letter ISO code (e.g., US, CA, GB)"
+                                  MaxLength="2" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Submit"
+                   Disabled="@(!_isValid || _submitting)">
+            @if (_submitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <span class="ml-2">Saving...</span>
+            }
+            else
+            {
+                @(IsEditMode ? "Update" : "Create")
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public IMudDialogInstance Dialog { get; set; } = default!;
+
+    [Parameter]
+    public bool IsEditMode { get; set; }
+
+    [Parameter]
+    public string? AccountId { get; set; }
+
+    [Parameter]
+    public GetAccountDto? ExistingAccount { get; set; }
+
+    [Inject]
+    private IAccountsApiClient AccountsApi { get; set; } = default!;
+
+    [Inject]
+    private ILogger<AccountFormDialog> Logger { get; set; } = default!;
+
+    private MudForm _form = default!;
+    private bool _isValid;
+    private bool _submitting;
+    private string? _errorMessage;
+    private AccountFormModel _model = new();
+
+    protected override void OnInitialized()
+    {
+        Logger.LogInformation("Dialog initialized - IsEditMode: {IsEdit}", IsEditMode);
+
+        if (IsEditMode && ExistingAccount != null)
+        {
+            _model = new AccountFormModel
+            {
+                FirstName = ExistingAccount.FirstName,
+                LastName = ExistingAccount.LastName,
+                Email = ExistingAccount.Email,
+                Phone = ExistingAccount.Phone,
+                IsActive = ExistingAccount.IsActive ?? true,
+                Address = new AddressFormModel
+                {
+                    Street1 = ExistingAccount.Address.Street1,
+                    Street2 = ExistingAccount.Address.Street2,
+                    City = ExistingAccount.Address.City,
+                    State = ExistingAccount.Address.State,
+                    PostalCode = ExistingAccount.Address.PostalCode,
+                    Country = ExistingAccount.Address.Country
+                }
+            };
+        }
+    }
+
+    private void Cancel()
+    {
+        Logger.LogInformation("Dialog cancelled");
+        Dialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        Logger.LogInformation("Form submit started");
+        await _form.Validate();
+
+        if (!_isValid)
+        {
+            Logger.LogWarning("Form validation failed");
+            return;
+        }
+
+        try
+        {
+            _submitting = true;
+            _errorMessage = null;
+
+            var dto = new CreateAccountDto(
+                FirstName: _model.FirstName!,
+                LastName: _model.LastName!,
+                Phone: _model.Phone!,
+                Email: _model.Email,
+                IsActive: _model.IsActive,
+                Address: new AddressDto(
+                    Street1: _model.Address.Street1!,
+                    Street2: _model.Address.Street2,
+                    City: _model.Address.City!,
+                    State: _model.Address.State,
+                    PostalCode: _model.Address.PostalCode!,
+                    Country: _model.Address.Country!
+                )
+            );
+
+            if (IsEditMode && !string.IsNullOrEmpty(AccountId))
+            {
+                Logger.LogInformation("Updating account {Id}", AccountId);
+                await AccountsApi.UpdateAccountAsync(AccountId, dto);
+            }
+            else
+            {
+                Logger.LogInformation("Creating new account");
+                await AccountsApi.CreateAccountAsync(dto);
+            }
+
+            Logger.LogInformation("Account saved successfully");
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Refit.ApiException apiEx)
+        {
+            _errorMessage = $"API Error: {apiEx.Message}";
+            if (apiEx.Content != null)
+            {
+                _errorMessage += $" - {apiEx.Content}";
+            }
+            Logger.LogError(apiEx, "API error during submit");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+            Logger.LogError(ex, "Error during submit");
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private class AccountFormModel
+    {
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public bool IsActive { get; set; } = true;
+        public AddressFormModel Address { get; set; } = new();
+    }
+
+    private class AddressFormModel
+    {
+        public string? Street1 { get; set; }
+        public string? Street2 { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? PostalCode { get; set; }
+        public string? Country { get; set; }
+    }
+} *@
+
+@rendermode InteractiveServer
 @using MudBlazor
 @using Nexus.CustomerOrder.Application.Features.Accounts.Models
 @using System.ComponentModel.DataAnnotations
 @using Nexus.Web.Services
 
 @inject IAccountsApiClient AccountsApi
-@inject IMudDialogInstance Dialog
 
 <MudDialog>
     <DialogContent>
@@ -145,6 +425,9 @@
 </MudDialog>
 
 @code {
+    [CascadingParameter]
+    public IMudDialogInstance Dialog { get; set; } = default!;
+
     [Parameter]
     public bool IsEditMode { get; set; }
 
