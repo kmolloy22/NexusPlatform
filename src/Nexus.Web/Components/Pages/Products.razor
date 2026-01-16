@@ -1,0 +1,333 @@
+﻿@page "/products"
+@rendermode InteractiveServer
+
+@using Nexus.CustomerOrder.Application.Features.Catalog.Models
+@using Nexus.Web.Components.Dialogs
+@using Nexus.Web.Services
+
+@inject IProductsApiClient ProductsApi
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Products</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">
+        Product Catalog Management
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudTextField @bind-Value="_searchText"
+                          Placeholder="Search products..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          DebounceInterval="300"
+                          OnDebounceIntervalElapsed="OnSearch"
+                          Class="flex-grow-1 mr-4" />
+
+            <MudSelect @bind-Value="_selectedCategory"
+                       Label="Category"
+                       Placeholder="All Categories"
+                       Clearable="true"
+                       Class="mr-4"
+                       Style="min-width: 200px;"
+                       OnClearButtonClick="OnCategoryCleared">
+                @foreach (var category in _categories)
+                {
+                    <MudSelectItem Value="@category">@category</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSelect T="bool?"
+                       @bind-Value="_selectedStatus"
+                       Label="Status"
+                       Placeholder="All"
+                       Clearable="true"
+                       Class="mr-4"
+                       Style="min-width: 150px;"
+                       OnClearButtonClick="OnStatusCleared">
+
+                <MudSelectItem Value="(bool?)true">Active</MudSelectItem>
+                <MudSelectItem Value="(bool?)false">Inactive</MudSelectItem>
+
+            </MudSelect>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateDialog">
+                Create Product
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Class="mb-4" />
+    }
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">
+            @_error
+        </MudAlert>
+    }
+
+    <MudTable Items="FilteredProducts"
+              Hover="true"
+              Striped="true"
+              Dense="true"
+              Loading="_loading">
+        <HeaderContent>
+            <MudTh>SKU</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Category</MudTh>
+            <MudTh Style="text-align: right">Price</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Created</MudTh>
+            <MudTh Style="text-align: right">Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="SKU">
+                <MudText Typo="Typo.body2">
+                    <strong>@context.Sku</strong>
+                </MudText>
+            </MudTd>
+
+            <MudTd DataLabel="Name">
+                <MudText Typo="Typo.body2">@context.Name</MudText>
+                @if (!string.IsNullOrWhiteSpace(context.Description))
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        @(context.Description.Length > 50
+                                            ? context.Description.Substring(0, 50) + "..."
+                                            : context.Description)
+                    </MudText>
+                }
+            </MudTd>
+
+            <MudTd DataLabel="Category">
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                    @context.Category
+                </MudChip>
+            </MudTd>
+
+            <MudTd DataLabel="Price" Style="text-align: right">
+                <MudText Typo="Typo.body2">
+                    <strong>@context.BasePrice.ToString("C")</strong>
+                </MudText>
+            </MudTd>
+
+            <MudTd DataLabel="Status">
+                @if (context.IsActive)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                        Active
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small">
+                        Inactive
+                    </MudChip>
+                }
+            </MudTd>
+
+            <MudTd DataLabel="Created">
+                @context.CreatedAt.ToString("MMM dd, yyyy")
+            </MudTd>
+
+            <MudTd Style="text-align: right">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               OnClick="@(() => OpenEditDialog(context))"
+                               Title="Edit" />
+
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Size="Size.Small"
+                               Color="Color.Error"
+                               OnClick="@(() => DeleteProduct(context))"
+                               Title="Delete" />
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Align="Align.Center" Class="pa-4">
+                No products found. Create your first product to get started.
+            </MudText>
+        </NoRecordsContent>
+    </MudTable>
+
+    @if (_hasMorePages)
+    {
+        <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Disabled="_loading"
+                       OnClick="LoadMoreProducts">
+                Load More
+            </MudButton>
+        </MudStack>
+    }
+</MudContainer>
+
+@code {
+    private readonly List<GetProductDto> _products = new();
+    private readonly HashSet<string> _categories = new();
+
+    private bool _loading;
+    private string? _error;
+    private string? _continuationToken;
+    private bool _hasMorePages;
+    private string _searchText = string.Empty;
+    private string? _selectedCategory;
+    private bool? _selectedStatus;
+
+    private const int PageSize = 50;
+
+    private IEnumerable<GetProductDto> FilteredProducts =>
+        string.IsNullOrWhiteSpace(_searchText)
+            ? _products
+            : _products.Where(p =>
+                p.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                p.Sku.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                (p.Description?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                p.Category.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
+            );
+
+    protected override async Task OnInitializedAsync()
+        => await LoadProducts();
+
+    private async Task LoadProducts(bool append = false)
+    {
+        try
+        {
+            _loading = true;
+            _error = null;
+
+            var result = await ProductsApi.GetProductsAsync(
+                take: PageSize,
+                category: _selectedCategory,
+                isActive: _selectedStatus,
+                continuationToken: append ? _continuationToken : null);
+
+            if (!append)
+            {
+                _products.Clear();
+                _categories.Clear();
+            }
+
+            _products.AddRange(result.Items);
+
+            // Update categories list
+            foreach (var product in result.Items)
+            {
+                _categories.Add(product.Category);
+            }
+
+            _continuationToken = result.ContinuationToken;
+            _hasMorePages = !string.IsNullOrWhiteSpace(_continuationToken);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load products: {ex.Message}";
+            Snackbar.Add(_error, Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task LoadMoreProducts()
+        => LoadProducts(append: true);
+
+    private Task OnSearch()
+        => Task.CompletedTask;
+
+    private async Task OnCategoryCleared()
+    {
+        _selectedCategory = null;
+        await LoadProducts();
+    }
+
+    private async Task OnStatusCleared()
+    {
+        _selectedStatus = null;
+        await LoadProducts();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            ["IsEditMode"] = false
+        };
+
+        var dialog = await DialogService.ShowAsync<ProductFormDialog>(
+            "Create Product",
+            parameters,
+            new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadProducts();
+            Snackbar.Add("Product created successfully!", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(GetProductDto product)
+    {
+        var parameters = new DialogParameters
+        {
+            ["IsEditMode"] = true,
+            ["ProductId"] = product.Id,
+            ["ExistingProduct"] = product
+        };
+
+        var dialog = await DialogService.ShowAsync<ProductFormDialog>(
+            "Edit Product",
+            parameters,
+            new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadProducts();
+            Snackbar.Add("Product updated successfully!", Severity.Success);
+        }
+    }
+
+    private async Task DeleteProduct(GetProductDto product)
+    {
+        var confirm = await DialogService.ShowMessageBox(
+            "Delete Product",
+            $"Are you sure you want to delete {product.Name} ({product.Sku})?",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirm is true)
+        {
+            await ProductsApi.DeleteProductAsync(product.Id);
+            _products.Remove(product);
+            Snackbar.Add("Product deleted successfully!", Severity.Success);
+        }
+    }
+}

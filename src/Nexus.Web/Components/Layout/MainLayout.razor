@@ -23,26 +23,31 @@
               ClipMode="DrawerClipMode.Always" 
               Elevation="2">
         <MudNavMenu>
-            <MudNavLink Href="/" 
-                       Match="NavLinkMatch.All" 
-                       Icon="@Icons.Material.Filled.Dashboard">
+            <MudNavLink Href="/"
+                        Match="NavLinkMatch.All"
+                        Icon="@Icons.Material.Filled.Dashboard">
                 Dashboard
             </MudNavLink>
-            <MudNavLink Href="/accounts" 
-                       Match="NavLinkMatch.Prefix" 
-                       Icon="@Icons.Material.Filled.People">
+            <MudNavLink Href="/accounts"
+                        Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.People">
                 Accounts
             </MudNavLink>
-            <MudNavLink Href="/orders" 
-                       Match="NavLinkMatch.Prefix" 
-                       Icon="@Icons.Material.Filled.ShoppingCart"
-                       Disabled="true">
+            <MudNavLink Href="/products"
+                        Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.Inventory">
+                Products
+            </MudNavLink>
+            <MudNavLink Href="/orders"
+                        Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.ShoppingCart"
+                        Disabled="true">
                 Orders
             </MudNavLink>
             <MudDivider Class="my-2" />
-            <MudNavLink Href="/settings" 
-                       Icon="@Icons.Material.Filled.Settings"
-                       Disabled="true">
+            <MudNavLink Href="/settings"
+                        Icon="@Icons.Material.Filled.Settings"
+                        Disabled="true">
                 Settings
             </MudNavLink>
         </MudNavMenu>

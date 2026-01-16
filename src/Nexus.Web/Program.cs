@@ -50,6 +50,14 @@ builder.Services.AddRefitClient<IAccountsApiClient>()
     .AddStandardResilienceHandler();
 //.AddServiceDiscovery();
 
+builder.Services.AddRefitClient<IProductsApiClient>()
+    .ConfigureHttpClient(c =>
+    {
+        c.BaseAddress = new Uri(apiBaseUrl);
+        c.Timeout = TimeSpan.FromSeconds(30);
+    })
+    .AddStandardResilienceHandler();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

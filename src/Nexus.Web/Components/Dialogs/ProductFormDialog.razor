@@ -1,0 +1,214 @@
+﻿@rendermode InteractiveServer
+@using MudBlazor
+@using Nexus.CustomerOrder.Application.Features.Catalog.Models
+@using Nexus.Web.Services
+
+@inject IProductsApiClient ProductsApi
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudGrid>
+                <!-- Product Information -->
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mb-2">
+                        Product Information
+                    </MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Sku"
+                                  Label="SKU"
+                                  Required="true"
+                                  RequiredError="SKU is required"
+                                  Disabled="IsEditMode"
+                                  Variant="Variant.Outlined"
+                                  HelperText="@(IsEditMode ? "SKU cannot be changed" : "Unique product identifier")" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Category"
+                                  Label="Category"
+                                  Required="true"
+                                  RequiredError="Category is required"
+                                  Variant="Variant.Outlined"
+                                  HelperText="e.g., Electronics, Clothing, Food" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_model.Name"
+                                  Label="Product Name"
+                                  Required="true"
+                                  RequiredError="Product name is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_model.Description"
+                                  Label="Description"
+                                  Lines="3"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Optional detailed description" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="_model.BasePrice"
+                                     Label="Base Price"
+                                     Required="true"
+                                     RequiredError="Price is required"
+                                     Variant="Variant.Outlined"
+                                     Format="C2"
+                                     Min="0.01d"
+                                     Step="0.01d"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSwitch @bind-Value="_model.IsActive"
+                               Label="Active"
+                               Color="Color.Success"
+                               Class="mt-4" />
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Inactive products won't appear in customer catalogs
+                    </MudText>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">
+                @_errorMessage
+            </MudAlert>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">
+            Cancel
+        </MudButton>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Submit"
+                   Disabled="@(!_isValid || _submitting)">
+            @if (_submitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <span class="ml-2">Saving...</span>
+            }
+            else
+            {
+                @(IsEditMode ? "Update" : "Create")
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public IMudDialogInstance Dialog { get; set; } = default!;
+
+    [Parameter]
+    public bool IsEditMode { get; set; }
+
+    [Parameter]
+    public string? ProductId { get; set; }
+
+    [Parameter]
+    public GetProductDto? ExistingProduct { get; set; }
+
+    private MudForm _form = default!;
+    private bool _isValid;
+    private bool _submitting;
+    private string? _errorMessage;
+    private ProductFormModel _model = new();
+
+    protected override void OnParametersSet()
+    {
+        if (IsEditMode && ExistingProduct is not null)
+        {
+            _model = new ProductFormModel
+            {
+                Sku = ExistingProduct.Sku,
+                Name = ExistingProduct.Name,
+                Description = ExistingProduct.Description,
+                BasePrice = ExistingProduct.BasePrice,
+                Category = ExistingProduct.Category,
+                IsActive = ExistingProduct.IsActive
+            };
+        }
+    }
+
+    private void Cancel()
+    {
+        Dialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+
+        if (!_isValid)
+            return;
+
+        try
+        {
+            _submitting = true;
+            _errorMessage = null;
+
+            if (IsEditMode && !string.IsNullOrWhiteSpace(ProductId))
+            {
+                var updateDto = new UpdateProductDto(
+                    Name: _model.Name!,
+                    Description: _model.Description,
+                    BasePrice: _model.BasePrice,
+                    Category: _model.Category!,
+                    IsActive: _model.IsActive
+                );
+
+                await ProductsApi.UpdateProductAsync(ProductId, updateDto);
+            }
+            else
+            {
+                var createDto = new CreateProductDto(
+                    Sku: _model.Sku!,
+                    Name: _model.Name!,
+                    Description: _model.Description,
+                    BasePrice: _model.BasePrice,
+                    Category: _model.Category!,
+                    IsActive: _model.IsActive
+                );
+
+                await ProductsApi.CreateProductAsync(createDto);
+            }
+
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Refit.ApiException apiEx)
+        {
+            _errorMessage = $"API Error: {apiEx.Message}";
+            if (apiEx.Content is not null)
+                _errorMessage += $" - {apiEx.Content}";
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private sealed class ProductFormModel
+    {
+        public string? Sku { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public double BasePrice { get; set; } = 0.01d;
+        public string? Category { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+}
